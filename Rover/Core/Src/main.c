@@ -39,24 +39,44 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 
-SPI_HandleTypeDef hspi1;
+SPI_HandleTypeDef hspi2;
 
-UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
+void Transmit_Character(char tx_char) {
+	
+	while(!(USART3->ISR & USART_ISR_TXE)){ //While the transmit data register is not empty, do nothing.
+	}
+	
+	USART3->TDR = tx_char;
+	
+}
 
+void Transmit_String(char* tx_str) {
+	
+	while(*tx_str != 0){ //While the transmit data register is empty, do nothing.
+		Transmit_Character(*tx_str);
+		tx_str++;
+	}
+	Transmit_Character('\n');
+	Transmit_Character('\r');
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_USART1_UART_Init(void);
+static void MX_USART3_UART_Init(void);
+static void MX_I2C2_Init(void);
+static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void CAM_CS_Init(void);
+uint8_t read_reg(uint8_t addr);
+void write_reg(uint8_t addr, uint8_t data);
+static void delay_10us(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -87,16 +107,16 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
-  MX_SPI1_Init();
-  MX_USART1_UART_Init();
+  MX_USART3_UART_Init();
+  MX_I2C2_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+	CAM_CS_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -106,6 +126,31 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		Transmit_String("ACK CMD ArduCAM Start!");
+		HAL_Delay(1000);
+
+		
+		while(1)
+		{
+			write_reg(0x00, 0x55);
+			uint8_t temp = read_reg(0x00);
+			if (temp != 0x55)
+			{
+				Transmit_String("\rACK CMD SPI interface Error!\n");
+				//Transmit_Character(temp);
+				HAL_Delay(1000);
+				continue;
+			}
+			else
+			{
+				Transmit_String("\rACK CMD SPI interface OK!\r\n");
+				break;
+			}
+		}
+		while(1)
+		{
+			Transmit_String("\rMain Loop!\r\n");
+		}
   }
   /* USER CODE END 3 */
 }
@@ -118,7 +163,6 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -144,135 +188,128 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
-  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
 }
 
 /**
-  * @brief I2C1 Initialization Function
+  * @brief I2C2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_I2C1_Init(void)
+static void MX_I2C2_Init(void)
 {
 
-  /* USER CODE BEGIN I2C1_Init 0 */
+  /* USER CODE BEGIN I2C2_Init 0 */
 
-  /* USER CODE END I2C1_Init 0 */
+  /* USER CODE END I2C2_Init 0 */
 
-  /* USER CODE BEGIN I2C1_Init 1 */
+  /* USER CODE BEGIN I2C2_Init 1 */
 
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x2000090E;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.Timing = 0x2000090E;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Analogue filter
   */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Digital filter
   */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN I2C1_Init 2 */
+  /* USER CODE BEGIN I2C2_Init 2 */
 
-  /* USER CODE END I2C1_Init 2 */
+  /* USER CODE END I2C2_Init 2 */
 
 }
 
 /**
-  * @brief SPI1 Initialization Function
+  * @brief SPI2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_SPI1_Init(void)
+static void MX_SPI2_Init(void)
 {
 
-  /* USER CODE BEGIN SPI1_Init 0 */
+  /* USER CODE BEGIN SPI2_Init 0 */
 
-  /* USER CODE END SPI1_Init 0 */
+  /* USER CODE END SPI2_Init 0 */
 
-  /* USER CODE BEGIN SPI1_Init 1 */
+  /* USER CODE BEGIN SPI2_Init 1 */
 
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 7;
-  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 7;
+  hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN SPI1_Init 2 */
+  /* USER CODE BEGIN SPI2_Init 2 */
 
-  /* USER CODE END SPI1_Init 2 */
+  /* USER CODE END SPI2_Init 2 */
 
 }
 
 /**
-  * @brief USART1 Initialization Function
+  * @brief USART3 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART1_UART_Init(void)
+static void MX_USART3_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART1_Init 0 */
+  /* USER CODE BEGIN USART3_Init 0 */
 
-  /* USER CODE END USART1_Init 0 */
+  /* USER CODE END USART3_Init 0 */
 
-  /* USER CODE BEGIN USART1_Init 1 */
+  /* USER CODE BEGIN USART3_Init 1 */
 
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 9600;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART1_Init 2 */
+  /* USER CODE BEGIN USART3_Init 2 */
 
-  /* USER CODE END USART1_Init 2 */
+  /* USER CODE END USART3_Init 2 */
 
 }
 
@@ -285,12 +322,70 @@ static void MX_GPIO_Init(void)
 {
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-
+	__HAL_RCC_GPIOA_CLK_ENABLE();
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+	*
+	*
+	*
+	*/
+
+static void delay_10us(){
+		for (volatile uint16_t i=0; i!=0x5; i++);
+}
+
+static void CAM_CS_Init(void)
+{
+	GPIO_InitTypeDef initStr = {GPIO_PIN_4,
+	GPIO_MODE_OUTPUT_PP,
+	GPIO_SPEED_FREQ_HIGH,
+	GPIO_NOPULL};
+	HAL_GPIO_Init(GPIOA, &initStr);
+	
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+}
+
+
+uint8_t bus_write(uint8_t address,uint8_t value)
+{	
+	uint8_t retval;
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);//Write cs pin low
+	delay_10us();
+	HAL_SPI_TransmitReceive(&hspi2, &address, &retval, 1, 100);
+	HAL_SPI_TransmitReceive(&hspi2, &value, &retval, 1, 100);
+	delay_10us();
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//Write cs pin high
+	return 1;
+}
+
+uint8_t bus_read(uint8_t address)
+{
+  uint8_t value;
+	uint8_t dummy_data = 0x00;
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);//Write cs pin low
+	HAL_SPI_TransmitReceive(&hspi2, &address, &value, 1, 100);
+	HAL_SPI_TransmitReceive(&hspi2, &dummy_data, &value, 1, 100);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//Write cs pin high
+	return value;
+}
+
+
+uint8_t read_reg(uint8_t addr)
+{
+	uint8_t data;
+	data = bus_read(addr & 0x7F);
+	return data;
+}
+void write_reg(uint8_t addr, uint8_t data)
+{
+	 bus_write(addr | 0x80, data); 
+}
+
 
 /* USER CODE END 4 */
 

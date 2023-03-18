@@ -31,6 +31,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define OVADDR 0x60
+#define OV2640_CHIPID_HIGH 	0x0A
+#define OV2640_CHIPID_LOW 	0x0B
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -39,7 +42,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c2;
+I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
 
@@ -70,13 +73,15 @@ void Transmit_String(char* tx_str) {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_I2C2_Init(void);
 static void MX_SPI2_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 static void CAM_CS_Init(void);
 uint8_t read_reg(uint8_t addr);
 void write_reg(uint8_t addr, uint8_t data);
 static void delay_10us(void);
+static uint8_t wrSensorReg8_8(uint8_t regID, uint8_t regDat);
+static uint8_t rdSensorReg8_8(uint8_t regID, uint8_t* regDat);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -113,8 +118,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_I2C2_Init();
   MX_SPI2_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 	CAM_CS_Init();
   /* USER CODE END 2 */
@@ -136,20 +141,35 @@ int main(void)
 			uint8_t temp = read_reg(0x00);
 			if (temp != 0x55)
 			{
-				Transmit_String("\rACK CMD SPI interface Error!\n");
-				//Transmit_Character(temp);
+				Transmit_String("ACK CMD SPI interface Error!");
+				Transmit_Character(temp);
 				HAL_Delay(1000);
 				continue;
 			}
 			else
 			{
-				Transmit_String("\rACK CMD SPI interface OK!\r\n");
+				Transmit_String("ACK CMD SPI interface OK!");
 				break;
 			}
 		}
 		while(1)
 		{
-			Transmit_String("\rMain Loop!\r\n");
+			uint8_t vid, pid;
+			wrSensorReg8_8(0xff, 0x01);
+			rdSensorReg8_8(OV2640_CHIPID_HIGH, &vid);
+			rdSensorReg8_8(OV2640_CHIPID_LOW, &pid);
+			if ((vid != 0x26 ) && (( pid != 0x41 ) || ( pid != 0x42 )))
+				Transmit_String("ACK CMD Can't find OV2640 module!");
+			else
+			{
+				Transmit_String("ACK CMD OV2640 detected.");   
+				break;
+			}
+		}
+		while(1)
+		{
+			Transmit_String("Main Loop!");  
+			HAL_Delay(1000);
 		}
   }
   /* USER CODE END 3 */
@@ -163,6 +183,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -188,53 +209,59 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /**
-  * @brief I2C2 Initialization Function
+  * @brief I2C1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_I2C2_Init(void)
+static void MX_I2C1_Init(void)
 {
 
-  /* USER CODE BEGIN I2C2_Init 0 */
+  /* USER CODE BEGIN I2C1_Init 0 */
 
-  /* USER CODE END I2C2_Init 0 */
+  /* USER CODE END I2C1_Init 0 */
 
-  /* USER CODE BEGIN I2C2_Init 1 */
+  /* USER CODE BEGIN I2C1_Init 1 */
 
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x2000090E;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x2000090E;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Analogue filter
   */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Digital filter
   */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN I2C2_Init 2 */
+  /* USER CODE BEGIN I2C1_Init 2 */
 
-  /* USER CODE END I2C2_Init 2 */
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -325,6 +352,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -368,8 +396,10 @@ uint8_t bus_read(uint8_t address)
   uint8_t value;
 	uint8_t dummy_data = 0x00;
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);//Write cs pin low
+	delay_10us();
 	HAL_SPI_TransmitReceive(&hspi2, &address, &value, 1, 100);
 	HAL_SPI_TransmitReceive(&hspi2, &dummy_data, &value, 1, 100);
+	delay_10us();
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//Write cs pin high
 	return value;
 }
@@ -386,7 +416,21 @@ void write_reg(uint8_t addr, uint8_t data)
 	 bus_write(addr | 0x80, data); 
 }
 
+uint8_t wrSensorReg8_8(uint8_t regID, uint8_t regDat)
+{
+	uint8_t id_dat[2] = {regID, regDat};
+	HAL_I2C_Master_Transmit(&hi2c1, OVADDR, id_dat, 2, 100);                                   
+	return 0;
+}
 
+uint8_t rdSensorReg8_8(uint8_t regID, uint8_t* regDat)
+{
+	HAL_I2C_Master_Transmit(&hi2c1, OVADDR, &regID, 2, 100);  
+	HAL_I2C_Master_Receive(&hi2c1, OVADDR|0x01, regDat, 1, 100);       
+	//sccb_bus_send_noack();                                
+	//sccb_bus_stop();                                      
+	return 0;                
+}
 /* USER CODE END 4 */
 
 /**

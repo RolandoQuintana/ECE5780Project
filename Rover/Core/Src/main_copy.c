@@ -31,7 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BUFFER_MAX_SIZE 4069
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,22 +43,8 @@
 I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
-DMA_HandleTypeDef hdma_spi2_rx;
-DMA_HandleTypeDef hdma_spi2_tx;
 
 UART_HandleTypeDef huart3;
-DMA_HandleTypeDef hdma_usart3_tx;
-
-int tsfr_len;
-int sendlen;
-int have_rcvd;
-
-uint8_t send_OK = 0;
-uint8_t rcv_OK = 0;
-
-uint8_t	Buf1[BUFFER_MAX_SIZE]={0}, Buf2[BUFFER_MAX_SIZE]={0};
-
-uint8_t	*picbuf = 0;
 
 /* USER CODE BEGIN PV */
 
@@ -70,13 +56,7 @@ void Transmit_Character(char tx_char) {
 	USART3->TDR = tx_char;
 	
 }
-void Transmit_Chars(char* tx_str) {
-	
-	while(*tx_str != 0){ //While the transmit data register is empty, do nothing.
-		Transmit_Character(*tx_str);
-		tx_str++;
-	}
-}
+
 void Transmit_String(char* tx_str) {
 	
 	while(*tx_str != 0){ //While the transmit data register is empty, do nothing.
@@ -86,13 +66,11 @@ void Transmit_String(char* tx_str) {
 	Transmit_Character('\n');
 	Transmit_Character('\r');
 }
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
@@ -103,9 +81,7 @@ void write_reg(uint8_t addr, uint8_t data);
 static void delay_10us(void);
 static uint8_t wrSensorReg8_8(uint8_t regID, uint8_t regDat);
 static uint8_t rdSensorReg8_8(uint8_t regID, uint8_t* regDat);
-static void ArduCAM_Init(void);
-static void SingleCapTransfer(void);
-static void DMA1_SendtoUsart(void);
+static void ArduCAM_Init();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -141,7 +117,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
@@ -157,6 +132,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		Transmit_String("ACK CMD ArduCAM Start!");
+		HAL_Delay(1000);
+
 		
 		while(1)
 		{
@@ -189,27 +166,11 @@ int main(void)
 				break;
 			}
 		}
-		uint8_t start_capture = 1;
-		ArduCAM_Init();
 		while(1)
 		{
-			if(start_capture){
-				start_capture = 0;
-				Transmit_String("ACK CMD Beginning single capture.");
-				SingleCapTransfer();
-			}
-			else if(rcv_OK){
-				rcv_OK = 0;
-				DMA1_SendtoUsart();
-			}
-			else if(send_OK){
-				Transmit_String("ACK CMD Captured!");
-				HAL_Delay(1000);
-			}
-			//else {
-				//HAL_Delay(1);
-				//Transmit_String("Waiting.");  
-			//}
+			ArduCAM_Init();
+			Transmit_String("Main Loop!");  
+			HAL_Delay(1000);
 		}
   }
   /* USER CODE END 3 */
@@ -381,25 +342,6 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Channel2_3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
-  /* DMA1_Channel4_5_6_7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel4_5_6_7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel4_5_6_7_IRQn);
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -485,7 +427,9 @@ uint8_t wrSensorReg8_8(uint8_t regID, uint8_t regDat)
 uint8_t rdSensorReg8_8(uint8_t regID, uint8_t* regDat)
 {
 	HAL_I2C_Master_Transmit(&hi2c1, OVADDR, &regID, 2, 100);  
-	HAL_I2C_Master_Receive(&hi2c1, OVADDR|0x01, regDat, 1, 100);                                    
+	HAL_I2C_Master_Receive(&hi2c1, OVADDR|0x01, regDat, 1, 100);       
+	//sccb_bus_send_noack();                                
+	//sccb_bus_stop();                                      
 	return 0;                
 }
 
@@ -517,7 +461,7 @@ void ArduCAM_Init()
 			wrSensorRegs8_8(OV2640_JPEG);
 			wrSensorReg8_8(0xff, 0x01);
 			wrSensorReg8_8(0x15, 0x00);
-			wrSensorRegs8_8(OV2640_1600x1200_JPEG); //OV2640_160x120_JPEG? Resolutions described in OV2640_regs.h
+			wrSensorRegs8_8(OV2640_320x240_JPEG); //OV2640_160x120_JPEG
 		}
 		else//Use QVGA formatting
 		{
@@ -525,83 +469,6 @@ void ArduCAM_Init()
 		}
 	}			
 			
-	//Get corresponding bit status
-uint8_t get_bit(uint8_t addr, uint8_t bit)
-{
-  uint8_t temp;
-  temp = read_reg(addr);
-  temp = temp & bit;
-  return temp;
-}
-
-uint32_t read_fifo_length(void)
-{
-	uint32_t len = 0;
-	uint32_t len1,len2,len3;
-	len1 = read_reg(FIFO_SIZE1);
-	len2 = read_reg(FIFO_SIZE2);
-	len3 = read_reg(FIFO_SIZE3) & 0x7f;
-	len = ((len3 << 16) | (len2 << 8) | len1) & 0x007fffff;
-	return len;	
-}
-
-void DMA1_RX(uint8_t *p )
-{		
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);//Write cs pin low
-	uint8_t value = BURST_FIFO_READ;
-	uint8_t dummy_data = 0x00;
-	HAL_SPI_TransmitReceive(&hspi2, &value, &dummy_data, 1, 100);//set_fifo_burst();
-	
-	HAL_SPI_Receive_DMA(&hspi2, p, sendlen);
-}
-
-void DMA1_SendtoUsart(void)
-{		
-	uint8_t	*sdbuf;
-	have_rcvd += sendlen;
-  if(have_rcvd < tsfr_len)
-	{	
-		if(picbuf == Buf1)
-		{		
-			sdbuf = Buf1;	  picbuf = Buf2;	
-		}
-		else
-		{
-			sdbuf = Buf2;	  picbuf = Buf1;
-		}
-		HAL_UART_Transmit_DMA(&huart3, sdbuf, sendlen);
-		int have_left	= tsfr_len - have_rcvd;		
-		sendlen	= (have_left>=BUFFER_MAX_SIZE) ? BUFFER_MAX_SIZE : have_left;	
-		DMA1_RX(picbuf);	
-	}
-	else
-	{
-		HAL_UART_Transmit_DMA(&huart3, picbuf, sendlen);
-		send_OK = 1;
-	}			
-}
-
-void SingleCapTransfer(void)
-{
-	write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK); //Flush FIFO
-	write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK); //Clear FIFO Flag
-	write_reg(ARDUCHIP_FIFO, FIFO_START_MASK); //Start capture
-	while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)){;}
-		
-	Transmit_String("ACK CMD capture done!");
-	tsfr_len = read_fifo_length();
-	//Transmit_Chars("ACK CMD the length is ");
-	//Transmit_Character((uint8_t )tsfr_len + '0');
-	//Transmit_Character((uint8_t )(tsfr_len >> 8) + '0' );
-	//Transmit_Character((uint8_t )(tsfr_len >> 16) + '0' );
-	//Transmit_Character((uint8_t )(tsfr_len >> 24) + '0' );
-	//Transmit_String(".");
-		
-	sendlen = (tsfr_len>=BUFFER_MAX_SIZE) ? BUFFER_MAX_SIZE : tsfr_len;
-	picbuf = Buf1;
-	DMA1_RX(Buf1);
-}
-
 /* USER CODE END 4 */
 
 /**

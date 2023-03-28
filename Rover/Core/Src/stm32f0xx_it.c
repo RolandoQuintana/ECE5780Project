@@ -60,7 +60,10 @@ extern DMA_HandleTypeDef hdma_spi2_tx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 /* USER CODE BEGIN EV */
 extern uint8_t rcv_OK;
+extern uint8_t send_OK;
+extern uint8_t done_rcv;
 extern void Transmit_String(char* str);
+extern UART_HandleTypeDef huart3;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -149,7 +152,11 @@ void SysTick_Handler(void)
 void DMA1_Channel2_3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
-
+	if((DMA1->ISR & DMA_ISR_TCIF2) && done_rcv){ //Check if the transfer complete flag is set, and we've recieved all the data.
+		done_rcv = 0;
+		send_OK =1;
+		huart3.gState = HAL_UART_STATE_READY;
+	}
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart3_tx);
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
@@ -163,7 +170,7 @@ void DMA1_Channel2_3_IRQHandler(void)
 void DMA1_Channel4_5_6_7_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_5_6_7_IRQn 0 */
-	if((DMA1->ISR & DMA_ISR_TCIF4)){ //Check if the transfer complete flag is set, and the half transfer flag is not.
+	if((DMA1->ISR & DMA_ISR_TCIF4)){ //Check if the transfer complete flag is set.
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);//Write cs pin high
 		rcv_OK =1;
 	}

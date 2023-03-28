@@ -601,7 +601,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
     {
       /* Disable the transfer complete  & transfer error interrupts */
       /* if the DMA mode is not CIRCULAR */
-      hdma->Instance->CCR &= ~(DMA_IT_TC | DMA_IT_TE);
+      //hdma->Instance->CCR &= ~(DMA_IT_TC | DMA_IT_TE);
 
       /* Change the DMA state */
       hdma->State = HAL_DMA_STATE_READY;

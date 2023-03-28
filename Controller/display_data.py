@@ -23,6 +23,12 @@ label.pack()
 def display_image(buffer):
     # Decode the JPEG image using Pillow and display it
     image = Image.open(BytesIO(buffer))
+    
+    # Scale up the image using Pillow's resize method
+    scale = 5
+    new_size = (image.width * scale, image.height * scale)
+    image = image.resize(new_size)#, Image.ANTIALIAS)
+    
     window.geometry("{}x{}".format(image.width, image.height))
 
     # Create a Tkinter PhotoImage from the PIL image
@@ -48,5 +54,5 @@ while True:
         display_image(buffer)
         
         found = 0
-
+        buffer = b''
     window.update()

@@ -55,6 +55,7 @@ int have_rcvd;
 
 uint8_t send_OK = 0;
 uint8_t rcv_OK = 0;
+uint8_t done_rcv = 0;
 
 uint8_t	Buf1[BUFFER_MAX_SIZE]={0}, Buf2[BUFFER_MAX_SIZE]={0};
 
@@ -87,6 +88,42 @@ void Transmit_String(char* tx_str) {
 	Transmit_Character('\r');
 }
 
+    /**
+    * @brief This function handles DMA RX interrupt request. 
+    * @param None
+    * @retval None 
+    */
+    void
+    USART3_DMA_RX_IRQHandler(
+    void
+    )
+    {
+    HAL_DMA_IRQHandler(huart3.hdmarx);
+    }
+    /**
+    * @brief This function handles DMA TX interrupt request.
+    * @param None
+    * @retval None 
+    */
+    void
+    USART3_DMA_TX_IRQHandler(
+    void
+    )
+    {
+    HAL_DMA_IRQHandler(huart3.hdmatx);
+    }
+    /**
+    * @brief This function handles USARTx interrupt request.
+    * @param None
+    * @retval None
+    */
+    void
+    USART3_IRQHandler(
+    void
+    )
+    {
+    HAL_UART_IRQHandler(&huart3);
+    }
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -203,8 +240,9 @@ int main(void)
 				DMA1_SendtoUsart();
 			}
 			else if(send_OK){
+				send_OK = 0;
 				Transmit_String("ACK CMD Captured!");
-				HAL_Delay(1000);
+				start_capture = 1;
 			}
 			//else {
 				//HAL_Delay(1);
@@ -517,7 +555,7 @@ void ArduCAM_Init()
 			wrSensorRegs8_8(OV2640_JPEG);
 			wrSensorReg8_8(0xff, 0x01);
 			wrSensorReg8_8(0x15, 0x00);
-			wrSensorRegs8_8(OV2640_1600x1200_JPEG); //OV2640_160x120_JPEG? Resolutions described in OV2640_regs.h
+			wrSensorRegs8_8(OV2640_160x120_JPEG); //OV2640_160x120_JPEG? Resolutions described in OV2640_regs.h
 		}
 		else//Use QVGA formatting
 		{
@@ -576,8 +614,8 @@ void DMA1_SendtoUsart(void)
 	}
 	else
 	{
+		done_rcv = 1;
 		HAL_UART_Transmit_DMA(&huart3, picbuf, sendlen);
-		send_OK = 1;
 	}			
 }
 
@@ -590,6 +628,7 @@ void SingleCapTransfer(void)
 		
 	Transmit_String("ACK CMD capture done!");
 	tsfr_len = read_fifo_length();
+	have_rcvd = 0;
 	//Transmit_Chars("ACK CMD the length is ");
 	//Transmit_Character((uint8_t )tsfr_len + '0');
 	//Transmit_Character((uint8_t )(tsfr_len >> 8) + '0' );

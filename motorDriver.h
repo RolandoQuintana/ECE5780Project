@@ -27,14 +27,21 @@ extern volatile uint8_t Ki;            // Integral gain
 
 #define BL_FWD 1
 #define BL_REV 2
+#define FL_FWD 3
+#define FL_REV 4
+
+#define FR_FWD 5
+#define FR_REV 6
+#define BR_FWD 7
+#define BR_REV 8
 
 // Sets up the entire motor drive system
 void motor_init(void);
 
 // Set the duty cycle of the PWM, accepts (0-100)
-void pwm_setDutyCycle(uint32_t duty,int ch);
+void pwm_setDutyCycle(uint32_t duty, int ch);
 
-// PI control code is called within a timer interrupt hi
+// PI control code is called within a timer interrupt
 void PI_update(void);
 
 

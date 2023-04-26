@@ -3,6 +3,7 @@
 "rover\main.o"
 "rover\stm32f0xx_it.o"
 "rover\stm32f0xx_hal_msp.o"
+"rover\motordriver.o"
 "rover\stm32f0xx_hal_i2c.o"
 "rover\stm32f0xx_hal_i2c_ex.o"
 "rover\stm32f0xx_hal_rcc.o"

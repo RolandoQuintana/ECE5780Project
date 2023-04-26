@@ -46,6 +46,8 @@ SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_rx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
+void USART3_4_IRQHandler(void);
+
 UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_tx;
 
@@ -60,6 +62,10 @@ uint8_t done_rcv = 0;
 uint8_t	Buf1[BUFFER_MAX_SIZE]={0}, Buf2[BUFFER_MAX_SIZE]={0};
 
 uint8_t	*picbuf = 0;
+
+// this number ranges from -100 to 100 for each wheel. -100 is max backwards and 100 is max forwards
+int8_t wheelSpeed[4] = {0,0,0,0};
+int currentWheel = 0;
 
 /* USER CODE BEGIN PV */
 
@@ -93,37 +99,38 @@ void Transmit_String(char* tx_str) {
     * @param None
     * @retval None 
     */
-    void
-    USART3_DMA_RX_IRQHandler(
-    void
-    )
-    {
-    HAL_DMA_IRQHandler(huart3.hdmarx);
-    }
+    //void
+    //USART3_DMA_RX_IRQHandler(
+    //void
+    //)
+    //{
+    //HAL_DMA_IRQHandler(huart3.hdmarx);
+    //}
     /**
     * @brief This function handles DMA TX interrupt request.
     * @param None
     * @retval None 
     */
-    void
-    USART3_DMA_TX_IRQHandler(
-    void
-    )
-    {
-    HAL_DMA_IRQHandler(huart3.hdmatx);
-    }
+    //void
+    //USART3_DMA_TX_IRQHandler(
+    //void
+    //)
+    //{
+    //HAL_DMA_IRQHandler(huart3.hdmatx);
+    //}
     /**
     * @brief This function handles USARTx interrupt request.
     * @param None
     * @retval None
     */
-    void
-    USART3_IRQHandler(
-    void
-    )
-    {
-    HAL_UART_IRQHandler(&huart3);
-    }
+    //void
+    //USART3_IRQHandler(
+    //void
+    //)
+    //{
+			
+    //HAL_UART_IRQHandler(&huart3);
+    //}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -147,7 +154,13 @@ static void DMA1_SendtoUsart(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void USART3_4_IRQHandler(void){
+	Transmit_String("IRQH");
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+	wheelSpeed[currentWheel] = USART3->RDR;
+	currentWheel = currentWheel == 3 ? 0 : currentWheel + 1;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);	
+}
 /* USER CODE END 0 */
 
 /**
@@ -157,7 +170,7 @@ static void DMA1_SendtoUsart(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -184,6 +197,20 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 	CAM_CS_Init();
+	
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // For TIM3
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN; // For TIM2
+	
+	// Red LED
+	GPIO_InitTypeDef pc6 = {GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW};
+	HAL_GPIO_Init(GPIOC, &pc6);
+	
+	// USART3 interrupt
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	//NVIC_SetPriority(USART3_4_IRQn, 3);
+	
+	
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -241,13 +268,9 @@ int main(void)
 			}
 			else if(send_OK){
 				send_OK = 0;
-				Transmit_String("ACK CMD Captured!");
+				Transmit_String("ACK CMD Tx complete!");
 				start_capture = 1;
 			}
-			//else {
-				//HAL_Delay(1);
-				//Transmit_String("Waiting.");  
-			//}
 		}
   }
   /* USER CODE END 3 */
@@ -625,16 +648,9 @@ void SingleCapTransfer(void)
 	write_reg(ARDUCHIP_FIFO, FIFO_CLEAR_MASK); //Clear FIFO Flag
 	write_reg(ARDUCHIP_FIFO, FIFO_START_MASK); //Start capture
 	while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)){;}
-		
-	Transmit_String("ACK CMD capture done!");
+	Transmit_String("ACK CMD Capture done!");
 	tsfr_len = read_fifo_length();
 	have_rcvd = 0;
-	//Transmit_Chars("ACK CMD the length is ");
-	//Transmit_Character((uint8_t )tsfr_len + '0');
-	//Transmit_Character((uint8_t )(tsfr_len >> 8) + '0' );
-	//Transmit_Character((uint8_t )(tsfr_len >> 16) + '0' );
-	//Transmit_Character((uint8_t )(tsfr_len >> 24) + '0' );
-	//Transmit_String(".");
 		
 	sendlen = (tsfr_len>=BUFFER_MAX_SIZE) ? BUFFER_MAX_SIZE : tsfr_len;
 	picbuf = Buf1;

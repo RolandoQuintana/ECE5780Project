@@ -154,7 +154,7 @@ GPIOB->OTYPER &= ~(1<<10);//~(0x100); //clear 8th bit
 GPIOB->OSPEEDR &= ~(1<<20);
 //set PUPDR to pull-down 10
 GPIOB->PUPDR &= ~(1<<20);
-GPIOB->PUPDR &= (1<<21);
+GPIOB->PUPDR |= (1<<21);
 
 //PB11
 //SET TO ALT FUNC
@@ -166,7 +166,7 @@ GPIOB->OTYPER &= ~(1<<11);//~(0x100); //clear 8th bit
 GPIOB->OSPEEDR &= ~(1<<22);
 //set PUPDR to pull-down 10
 GPIOB->PUPDR &= ~(1<<22);
-GPIOB->PUPDR &= (1<<23);
+GPIOB->PUPDR |= (1<<23);
 	
 
 
@@ -180,7 +180,7 @@ GPIOA->OTYPER &= ~(1<<0);//~(0x100); //clear 8th bit
 GPIOA->OSPEEDR &= ~(1<<0);
 //set PUPDR to pull-down 10
 GPIOA->PUPDR &= ~(1<<0);
-GPIOA->PUPDR &= (1<<1);
+GPIOA->PUPDR |= (1<<1);
 
 //PA1
 //SET TO ALT FUNC
@@ -192,7 +192,7 @@ GPIOA->OTYPER &= ~(1<<1);//~(0x100); //clear 8th bit
 GPIOA->OSPEEDR &= ~(1<<2);
 //set PUPDR to pull-down 10
 GPIOA->PUPDR &= ~(1<<2);
-GPIOA->PUPDR &= (1<<3);
+GPIOA->PUPDR |= (1<<3);
 
 //PA2
 //SET TO ALT FUNC
@@ -204,7 +204,7 @@ GPIOA->OTYPER &= ~(1<<2);//~(0x100); //clear 8th bit
 GPIOA->OSPEEDR &= ~(1<<4);
 //set PUPDR to pull-down 10
 GPIOA->PUPDR &= ~(1<<4);
-GPIOA->PUPDR &= (1<<5);
+GPIOA->PUPDR |= (1<<5);
 
 //PA3
 //SET TO ALT FUNC
@@ -216,7 +216,7 @@ GPIOA->OTYPER &= ~(1<<3);//~(0x100); //clear 8th bit
 GPIOA->OSPEEDR &= ~(1<<6);
 //set PUPDR to pull-down 10
 GPIOA->PUPDR &= ~(1<<6);
-GPIOA->PUPDR &= (1<<7);
+GPIOA->PUPDR |= (1<<7);
 
 
 	

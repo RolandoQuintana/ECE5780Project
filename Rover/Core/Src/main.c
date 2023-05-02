@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "motorDriver.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -155,11 +156,43 @@ static void DMA1_SendtoUsart(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void USART3_4_IRQHandler(void){
-	Transmit_String("IRQH");
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
 	wheelSpeed[currentWheel] = USART3->RDR;
 	currentWheel = currentWheel == 3 ? 0 : currentWheel + 1;
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);	
+		// Back right
+		if(wheelSpeed[0] > 0){
+			pwm_setDutyCycle(wheelSpeed[0], BR_FWD);
+		} else if(wheelSpeed[0] < 0){
+			pwm_setDutyCycle(wheelSpeed[0] * -1, BR_REV);
+		} else {
+			pwm_setDutyCycle(0, BR_REV);
+		}
+		
+		// Front Left
+		if(wheelSpeed[1] > 0){
+			pwm_setDutyCycle(wheelSpeed[1], FL_FWD);
+		} else if(wheelSpeed[1] < 0){
+			pwm_setDutyCycle(wheelSpeed[1] * -1, FL_REV);
+		} else {
+			pwm_setDutyCycle(0, FL_REV);
+		}
+		
+		// Back Left
+		if(wheelSpeed[2] > 0){
+			pwm_setDutyCycle(wheelSpeed[2], BL_FWD);
+		} else if(wheelSpeed[2] < 0){
+			pwm_setDutyCycle(wheelSpeed[2] * -1, BL_REV);
+		} else {
+			pwm_setDutyCycle(0, BL_REV);
+		}
+		
+		// Front Right
+		if(wheelSpeed[3] > 0){
+			pwm_setDutyCycle(wheelSpeed[3], FR_FWD);
+		} else if(wheelSpeed[3] < 0){
+			pwm_setDutyCycle(wheelSpeed[3] * -1, FR_REV);
+		} else {
+			pwm_setDutyCycle(0, FR_REV);
+		}
 }
 /* USER CODE END 0 */
 
@@ -197,16 +230,18 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 	CAM_CS_Init();
+	motor_init();
 	
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // For TIM3
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN; // For TIM2
+	//RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // For TIM3
+	//RCC->APB1ENR |= RCC_APB1ENR_TIM2EN; // For TIM2
 	
 	// Red LED
-	GPIO_InitTypeDef pc6 = {GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW};
-	HAL_GPIO_Init(GPIOC, &pc6);
+	//GPIO_InitTypeDef pc6 = {GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW};
+	//HAL_GPIO_Init(GPIOC, &pc6);
 	
 	// USART3 interrupt
-	NVIC_EnableIRQ(USART3_4_IRQn);
+	// removing this makes camera work
+	 //NVIC_EnableIRQ(USART3_4_IRQn);
 	//NVIC_SetPriority(USART3_4_IRQn, 3);
 	
 	

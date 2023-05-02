@@ -12,7 +12,7 @@ import numpy
 #    BACK
 
 
-cereal = serial.Serial('COM3', 9600)
+cereal = serial.Serial('COM8', 9600)
 
 # For tuning 
 ZERO_TOLERANCE = 0.15
@@ -20,7 +20,7 @@ STATIC_WHEEL_MULTIPLIER = 1
 DYNAMIC_WHEEL_MULTIPLIER = 1.3
 # Don't mess with this one, is good
 TOTALSTEPS = 2**16 / 2
-x, y = 0, 0
+x, y, z = 0, 0, 0
 
 # Check if theres even a controller connected
 try:
@@ -29,47 +29,56 @@ except Exception as e:
     print(e)
     exit(0)
 
-def calculate_duties(x, y):
-    # this will be the duty cycle for the set of wheels that change direction in a quadrant
-    m = math.sqrt(x**2 + y**2) * (math.atan(abs(y/(x if x != 0 else 0.001))) - math.pi/4) * DYNAMIC_WHEEL_MULTIPLIER
-    # duty cycle for set of wheels that stay the same in a quadrant
-    ma = math.sqrt(x**2 + y**2) * STATIC_WHEEL_MULTIPLIER
-    # clamp both values
-    m = min(m, 1)
-    ma = min(ma, 1)
-    # right side of plane
-    if x > ZERO_TOLERANCE:
-        # first quadrant
-        if y > ZERO_TOLERANCE:
-            return m, ma, ma, m
-        # fourth quadrant
-        elif y < -ZERO_TOLERANCE:
-            return -ma, -m, -m, -ma
-        # dead zone, only go right
+def calculate_duties(x, y, z):
+    if z > .5 or z < -.5:
+        if z < 0:
+            speed = min(z*-1, 1)
+            return -speed, -speed, speed, speed
         else:
-            return -ma, ma, ma, -ma
-    # left side of plane
-    elif x < -ZERO_TOLERANCE:
-        # second quadrant
-        if y > ZERO_TOLERANCE:
-            return ma, m, m, ma
-        # third quadrant
-        elif y < -ZERO_TOLERANCE:
-            return -m, -ma, -ma, -m
-        # dead zone, only go left
-        else:
-            return ma, -ma, -ma, ma
-    # horizontal deadzone
+            speed = min(z, 1)
+            return speed, speed, -speed, -speed
     else:
-        # go up
-        if y > ZERO_TOLERANCE:
-            return ma, ma, ma, ma
-        # go down
-        elif y < -ZERO_TOLERANCE:
-            return -ma, -ma, -ma, -ma
-        # don't move
+        z = 0
+        # this will be the duty cycle for the set of wheels that change direction in a quadrant
+        m = math.sqrt(x**2 + y**2) * (math.atan(abs(y/(x if x != 0 else 0.001))) - math.pi/4) * DYNAMIC_WHEEL_MULTIPLIER
+        # duty cycle for set of wheels that stay the same in a quadrant
+        ma = math.sqrt(x**2 + y**2) * STATIC_WHEEL_MULTIPLIER
+        # clamp both values
+        m = min(m, 1)
+        ma = min(ma, 1)
+        # right side of plane
+        if x > ZERO_TOLERANCE:
+            # first quadrant
+            if y > ZERO_TOLERANCE:
+                return m, ma, ma, m
+            # fourth quadrant
+            elif y < -ZERO_TOLERANCE:
+                return -ma, -m, -m, -ma
+            # dead zone, only go right
+            else:
+                return -ma, ma, ma, -ma
+        # left side of plane
+        elif x < -ZERO_TOLERANCE:
+            # second quadrant
+            if y > ZERO_TOLERANCE:
+                return ma, m, m, ma
+            # third quadrant
+            elif y < -ZERO_TOLERANCE:
+                return -m, -ma, -ma, -m
+            # dead zone, only go left
+            else:
+                return ma, -ma, -ma, ma
+        # horizontal deadzone
         else:
-            return 0, 0, 0, 0
+            # go up
+            if y > ZERO_TOLERANCE:
+                return ma, ma, ma, ma
+            # go down
+            elif y < -ZERO_TOLERANCE:
+                return -ma, -ma, -ma, -ma
+            # don't move
+            else:
+                return 0, 0, 0, 0
         
 # Helper for turning those binary numbers back into signed 8 bit ints
 def printWheelSpeeds(wheel_duties):
@@ -85,9 +94,11 @@ while True:
                 x = event.state / TOTALSTEPS
             if event.code == inputs.ABSOLUTE_AXES[1][1]:
                 y = event.state / TOTALSTEPS
+            if event.code == inputs.ABSOLUTE_AXES[3][1]:
+                z = event.state / TOTALSTEPS
                 
             # Turn the floats into signed 8 bit ints, then turn into byte array
-            wheel_duties = bytes([numpy.uint8(i * 100) for i in calculate_duties(x,y)])
+            wheel_duties = bytes([numpy.uint8(i * 100) for i in calculate_duties(x,y,z)])
             
             # SEND IT
             cereal.write(wheel_duties)

@@ -1,35 +1,38 @@
-rover\main.o: ../Core/Src/main.c
-rover\main.o: ../Core/Inc/main.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h
-rover\main.o: ../Core/Inc/stm32f0xx_hal_conf.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h
-rover\main.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h
-rover\main.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h
-rover\main.o: ../Drivers/CMSIS/Include/core_cm0.h
-rover\main.o: C:\Keil_v5\ARM\ARMCCV503u1\Bin\..\include\stdint.h
-rover\main.o: ../Drivers/CMSIS/Include/cmsis_version.h
-rover\main.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
-rover\main.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
-rover\main.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-rover\main.o: C:\Keil_v5\ARM\ARMCCV503u1\Bin\..\include\stddef.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_exti.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_dma.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_dma_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_cortex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_flash.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_flash_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi_ex.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h
-rover\main.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h
-rover\main.o: ../Core/Src/OV2640_regs.h
+rover/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal.h \
+  ..\Core\Inc\stm32f0xx_hal_conf.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_rcc.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_def.h \
+  ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f0xx.h \
+  ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f072xb.h \
+  ..\Drivers\CMSIS\Include\core_cm0.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  ..\Drivers\CMSIS\Include\cmsis_version.h \
+  ..\Drivers\CMSIS\Include\cmsis_compiler.h \
+  ..\Drivers\CMSIS\Include\cmsis_armclang.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\arm_compat.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\arm_acle.h \
+  ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\system_stm32f0xx.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\Legacy\stm32_hal_legacy.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\stddef.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_rcc_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_gpio.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_gpio_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_exti.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_dma.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_dma_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_cortex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_flash.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_flash_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_i2c.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_i2c_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_pwr.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_pwr_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_spi.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_spi_ex.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_uart.h \
+  ..\Drivers\STM32F0xx_HAL_Driver\Inc\stm32f0xx_hal_uart_ex.h \
+  ..\Core\Inc\motorDriver.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  C:\Program\ Files\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdlib.h \
+  ..\Core\Src\OV2640_regs.h

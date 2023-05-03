@@ -1,53 +1,15 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "motorDriver.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "OV2640_regs.h"
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 #define BUFFER_MAX_SIZE 4069
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_rx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
-void USART3_4_IRQHandler(void);
+void USART1_IRQHandler(void);
+int baudRate = 9600;
 
 UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_tx;
@@ -67,8 +29,6 @@ uint8_t	*picbuf = 0;
 // this number ranges from -100 to 100 for each wheel. -100 is max backwards and 100 is max forwards
 int8_t wheelSpeed[4] = {0,0,0,0};
 int currentWheel = 0;
-
-/* USER CODE BEGIN PV */
 
 void Transmit_Character(char tx_char) {
 	
@@ -94,47 +54,6 @@ void Transmit_String(char* tx_str) {
 	Transmit_Character('\n');
 	Transmit_Character('\r');
 }
-
-    /**
-    * @brief This function handles DMA RX interrupt request. 
-    * @param None
-    * @retval None 
-    */
-    //void
-    //USART3_DMA_RX_IRQHandler(
-    //void
-    //)
-    //{
-    //HAL_DMA_IRQHandler(huart3.hdmarx);
-    //}
-    /**
-    * @brief This function handles DMA TX interrupt request.
-    * @param None
-    * @retval None 
-    */
-    //void
-    //USART3_DMA_TX_IRQHandler(
-    //void
-    //)
-    //{
-    //HAL_DMA_IRQHandler(huart3.hdmatx);
-    //}
-    /**
-    * @brief This function handles USARTx interrupt request.
-    * @param None
-    * @retval None
-    */
-    //void
-    //USART3_IRQHandler(
-    //void
-    //)
-    //{
-			
-    //HAL_UART_IRQHandler(&huart3);
-    //}
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
@@ -151,12 +70,10 @@ static uint8_t rdSensorReg8_8(uint8_t regID, uint8_t* regDat);
 static void ArduCAM_Init(void);
 static void SingleCapTransfer(void);
 static void DMA1_SendtoUsart(void);
-/* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-void USART3_4_IRQHandler(void){
-	wheelSpeed[currentWheel] = USART3->RDR;
+
+void USART1_IRQHandler(void){
+	wheelSpeed[currentWheel] = USART1->RDR;
 	currentWheel = currentWheel == 3 ? 0 : currentWheel + 1;
 		// Back right
 		if(wheelSpeed[0] > 0){
@@ -194,67 +111,30 @@ void USART3_4_IRQHandler(void){
 			pwm_setDutyCycle(0, FR_REV);
 		}
 }
-/* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-	
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-	
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
 	CAM_CS_Init();
 	motor_init();
-	
-	//RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // For TIM3
-	//RCC->APB1ENR |= RCC_APB1ENR_TIM2EN; // For TIM2
-	
-	// Red LED
-	//GPIO_InitTypeDef pc6 = {GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW};
-	//HAL_GPIO_Init(GPIOC, &pc6);
-	
-	// USART3 interrupt
-	// removing this makes camera work
-	 //NVIC_EnableIRQ(USART3_4_IRQn);
-	//NVIC_SetPriority(USART3_4_IRQn, 3);
-	
-	
-	
-  /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	__HAL_RCC_USART1_CLK_ENABLE();
+	USART1->BRR = HAL_RCC_GetHCLKFreq() / baudRate;	
+	USART1->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE | USART_CR1_UE;
+	GPIO_InitTypeDef pa10 = {GPIO_PIN_10, GPIO_MODE_AF_PP, GPIO_NOPULL, GPIO_SPEED_LOW, GPIO_AF1_USART1};
+	HAL_GPIO_Init(GPIOA, &pa10);
+	NVIC_EnableIRQ(USART1_IRQn);
+	NVIC_SetPriority(USART1_IRQn, 3);
+	
+	
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
 		Transmit_String("ACK CMD ArduCAM Start!");
 		
 		while(1)
@@ -306,15 +186,13 @@ int main(void)
 				Transmit_String("ACK CMD Tx complete!");
 				start_capture = 1;
 			}
+			//else if(1){
+			//	USART1_IRQHandler();
+			//}
 		}
   }
-  /* USER CODE END 3 */
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -353,21 +231,8 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
 static void MX_I2C1_Init(void)
 {
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
   hi2c1.Init.Timing = 0x2000090E;
   hi2c1.Init.OwnAddress1 = 0;
@@ -382,30 +247,17 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
 
-  /** Configure Analogue filter
-  */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
   {
     Error_Handler();
   }
 
-  /** Configure Digital filter
-  */
   if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
 }
 
-/**
-  * @brief SPI2 Initialization Function
-  * @param None
-  * @retval None
-  */
 static void MX_SPI2_Init(void)
 {
 
@@ -495,11 +347,6 @@ static void MX_DMA_Init(void)
 
 }
 
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
 static void MX_GPIO_Init(void)
 {
 
@@ -510,13 +357,6 @@ static void MX_GPIO_Init(void)
 
 }
 
-/* USER CODE BEGIN 4 */
-
-/**
-	*
-	*
-	*
-	*/
 
 static void delay_10us(){
 		for (volatile uint16_t i=0; i!=0x5; i++);

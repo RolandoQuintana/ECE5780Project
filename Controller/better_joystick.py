@@ -12,7 +12,7 @@ import numpy
 #    BACK
 
 
-cereal = serial.Serial('COM8', 9600)
+cereal = serial.Serial('COM5', 9600)
 
 # For tuning 
 ZERO_TOLERANCE = 0.15

@@ -6,6 +6,7 @@ This readme document serves as a guide for our rescue rover. It includes the fol
 2. Functionality
 3. Wiring/Schematics
 4. Setup
+5. Pin Function Table
 
 ## 1. Purpose
 
@@ -39,3 +40,58 @@ Here, you will find step-by-step instructions on how to set up the rescue rover.
     1. Rover 
     2. X-box controller
 4. Run the Main Python program on the computer (be sure the correct comport is selected for the HC-05 module on the rover).
+
+## 5. Pin Function Table
+
+# Pin Function Table
+
+| Pin | Function |
+| --- | --- |
+| PA0 | TIM2_CH1 |
+| PA1 | TIM2_CH2 |
+| PA2 |  |
+| PA3 |  |
+| PA4 | SPI_ChipSelect |
+| PA5 |  |
+| PA6 |  |
+| PA7 |  |
+| PA8 |  |
+| PA9 |  |
+| PA10 |  |
+| PA11 |  |
+| PA12 |  |
+| PA13 |  |
+| PA14 |  |
+| PA15 |  |
+| PB0 |  |
+| PB1 |  |
+| PB2 |  |
+| PB3 |  |
+| PB4 |  |
+| PB5 |  |
+| PB6 | I2C_CLK |
+| PB7 | I2C_SDA |
+| PB8 |  |
+| PB9 |  |
+| PB10 |  |
+| PB11 | TIM2_CH3 |
+| PB12 | TIM2_CH4 |
+| PB13 | SPI2_CLK |
+| PB14 | SPI2_MISO |
+| PB15 |  |
+| PC0 |  |
+| PC1 |  |
+| PC2 |  |
+| PC3 | SPI2_MOSI |
+| PC4 | USART3_TX |
+| PC5 | USART3_RX |
+| PC6 | TIM3_CH1 |
+| PC7 | TIM3_CH2 |
+| PC8 | TIM3_CH3 |
+| PC9 | TIM3_CH4 |
+| PC10 |  |
+| PC11 |  |
+| PC12 |  |
+| PC13 |  |
+| PC14 |  |
+| PC15 |  |
